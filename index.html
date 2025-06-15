@@ -57,7 +57,20 @@
 <body>
 
   
-    <div id="welcomeScreen" class="screen active">
+    
+  <div id="welcomeScreen" class="screen active">
+    <h1>Welcome</h1>
+    <p>Select attendance method</p>
+    <button onclick="startQrAttendance()">QR Attendance</button>
+    <button onclick="startSelfieAttendance()">Selfie Attendance</button>
+  </div>
+  <div id="selfieScreen" class="screen">
+    <h1>Take a Selfie</h1>
+    <video id="selfieVideo" autoplay playsinline></video>
+    <canvas id="selfieCanvas" class="hidden"></canvas>
+    <button onclick="captureSelfie()">Capture</button>
+  </div>
+
       <h1>Welcome</h1>
       <p>Select attendance method</p>
       <button onclick="startQrAttendance()">QR Attendance</button>
