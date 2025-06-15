@@ -56,7 +56,20 @@
 </head>
 <body>
 
-  <div id="welcomeScreen" class="screen active">
+  
+    <div id="welcomeScreen" class="screen active">
+      <h1>Welcome</h1>
+      <p>Select attendance method</p>
+      <button onclick="startQrAttendance()">QR Attendance</button>
+      <button onclick="startSelfieAttendance()">Selfie Attendance</button>
+    </div>
+    <div id="selfieScreen" class="screen">
+      <h1>Take a Selfie</h1>
+      <video id="selfieVideo" autoplay playsinline></video>
+      <canvas id="selfieCanvas" class="hidden"></canvas>
+      <button onclick="captureSelfie()">Capture</button>
+    </div>
+    
     <h1>Welcome</h1>
     <p>Click below to start your attendance</p>
     <button onclick="goToLocationScreen()">Start Attendance</button>
@@ -111,7 +124,49 @@
 
     function resetApp() {
       stopScanner();
-      showScreen('welcomeScreen');
+      
+    showScreen('welcomeScreen');
+
+    function startQrAttendance() {
+      goToLocationScreen();
+    }
+
+    function startSelfieAttendance() {
+      showScreen('locationScreen');
+      navigator.geolocation.getCurrentPosition(
+        () => setTimeout(() => showScreen('selfieScreen'), 1000),
+        () => showScreen('selfieScreen')
+      );
+    }
+
+    function captureSelfie() {
+      const video = document.getElementById('selfieVideo');
+      const canvas = document.getElementById('selfieCanvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      stopSelfieStream();
+      goToResult(true, "Selfie captured. Attendance marked.");
+    }
+
+    function startSelfieCamera() {
+      const video = document.getElementById('selfieVideo');
+      navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+        selfieStream = stream;
+        video.srcObject = stream;
+      }).catch(() => {
+        goToResult(false, "Camera access denied.");
+      });
+    }
+
+    function stopSelfieStream() {
+      if (selfieStream) {
+        selfieStream.getTracks().forEach(track => track.stop());
+      }
+    }
+
+    let selfieStream;
+    
     }
 
     function getDistance(lat1, lon1, lat2, lon2) {
@@ -185,7 +240,49 @@
       goToResult(true, "QR Code accepted. Attendance marked.");
     }
 
+    
     showScreen('welcomeScreen');
+
+    function startQrAttendance() {
+      goToLocationScreen();
+    }
+
+    function startSelfieAttendance() {
+      showScreen('locationScreen');
+      navigator.geolocation.getCurrentPosition(
+        () => setTimeout(() => showScreen('selfieScreen'), 1000),
+        () => showScreen('selfieScreen')
+      );
+    }
+
+    function captureSelfie() {
+      const video = document.getElementById('selfieVideo');
+      const canvas = document.getElementById('selfieCanvas');
+      canvas.width = video.videoWidth;
+      canvas.height = video.videoHeight;
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+      stopSelfieStream();
+      goToResult(true, "Selfie captured. Attendance marked.");
+    }
+
+    function startSelfieCamera() {
+      const video = document.getElementById('selfieVideo');
+      navigator.mediaDevices.getUserMedia({ video: true }).then(stream => {
+        selfieStream = stream;
+        video.srcObject = stream;
+      }).catch(() => {
+        goToResult(false, "Camera access denied.");
+      });
+    }
+
+    function stopSelfieStream() {
+      if (selfieStream) {
+        selfieStream.getTracks().forEach(track => track.stop());
+      }
+    }
+
+    let selfieStream;
+    
   </script>
 </body>
 </html>
