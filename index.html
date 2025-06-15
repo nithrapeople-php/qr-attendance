@@ -134,7 +134,10 @@
     function startSelfieAttendance() {
       showScreen('locationScreen');
       navigator.geolocation.getCurrentPosition(
-        () => setTimeout(() => showScreen('selfieScreen'), 1000),
+        () => setTimeout(() => {
+          showScreen('selfieScreen');
+          startSelfieCamera();
+        }, 1000),
         () => showScreen('selfieScreen')
       );
     }
@@ -250,7 +253,10 @@
     function startSelfieAttendance() {
       showScreen('locationScreen');
       navigator.geolocation.getCurrentPosition(
-        () => setTimeout(() => showScreen('selfieScreen'), 1000),
+        () => setTimeout(() => {
+          showScreen('selfieScreen');
+          startSelfieCamera();
+        }, 1000),
         () => showScreen('selfieScreen')
       );
     }
