@@ -1,0 +1,191 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>QR Attendance with Geo-Fencing</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { box-sizing: border-box; padding: 0; margin: 0; }
+    html, body {
+      height: 100%;
+      font-family: Arial, sans-serif;
+      background: #f0f4f8;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .screen {
+      display: none;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      max-width: 400px;
+      padding: 2rem;
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 0 20px rgba(0,0,0,0.1);
+    }
+    .screen.active {
+      display: flex;
+    }
+    h1 { margin-bottom: 1rem; }
+    p { margin: 1rem 0; text-align: center; }
+    video {
+      width: 100%;
+      border-radius: 12px;
+      border: 2px solid #ccc;
+    }
+    button {
+      margin-top: 1rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      background: #007bff;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    .success { color: green; }
+    .error { color: red; }
+  </style>
+</head>
+<body>
+
+  <div id="welcomeScreen" class="screen active">
+    <h1>Welcome</h1>
+    <p>Click below to start your attendance</p>
+    <button onclick="goToLocationScreen()">Start Attendance</button>
+  </div>
+
+  <div id="locationScreen" class="screen">
+    <h1>Verifying Location</h1>
+    <p id="locationStatus">Checking...</p>
+    <button onclick="retryLocation()">Retry</button>
+  </div>
+
+  <div id="qrScreen" class="screen">
+    <h1>Scan QR Code</h1>
+    <video id="video" autoplay playsinline></video>
+    <button onclick="simulateScan()">Simulate Scan</button>
+  </div>
+
+  <div id="resultScreen" class="screen">
+    <h1 id="resultTitle"></h1>
+    <p id="resultMessage"></p>
+    <button onclick="resetApp()">Back to Home</button>
+  </div>
+
+  <script>
+    const allowedLat = 12.9716;
+    const allowedLng = 77.5946;
+    const allowedRadius = 150;
+
+    function showScreen(id) {
+      document.querySelectorAll('.screen').forEach(screen => screen.classList.remove('active'));
+      document.getElementById(id).classList.add('active');
+    }
+
+    function goToLocationScreen() {
+      showScreen('locationScreen');
+      checkLocation();
+    }
+
+    function goToQRScreen() {
+      showScreen('qrScreen');
+      startScanner();
+    }
+
+    function goToResult(success, message) {
+      showScreen('resultScreen');
+      const title = document.getElementById('resultTitle');
+      const msg = document.getElementById('resultMessage');
+      title.textContent = success ? "✅ Attendance Successful" : "❌ Attendance Failed";
+      title.className = success ? "success" : "error";
+      msg.textContent = message;
+    }
+
+    function resetApp() {
+      stopScanner();
+      showScreen('welcomeScreen');
+    }
+
+    function getDistance(lat1, lon1, lat2, lon2) {
+      const R = 6371000;
+      const dLat = (lat2 - lat1) * Math.PI / 180;
+      const dLon = (lon2 - lon1) * Math.PI / 180;
+      const a =
+        Math.sin(dLat / 2) ** 2 +
+        Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+        Math.sin(dLon / 2) ** 2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+      return R * c;
+    }
+
+    function checkLocation() {
+      const status = document.getElementById('locationStatus');
+      status.textContent = 'Fetching location...';
+
+      if (!navigator.geolocation) {
+        status.textContent = 'Geolocation is not supported.';
+        return;
+      }
+
+      navigator.geolocation.getCurrentPosition(
+        (pos) => {
+          const lat = pos.coords.latitude;
+          const lng = pos.coords.longitude;
+          const distance = getDistance(lat, lng, allowedLat, allowedLng);
+
+          if (distance <= allowedRadius) {
+            status.textContent = 'Location verified. Proceeding...';
+            setTimeout(goToQRScreen, 1500);
+          } else {
+            status.textContent = 'You are outside the permitted location.';
+          }
+        },
+        (err) => {
+          console.error(err);
+          status.textContent = 'Unable to fetch location. Please allow location access.';
+        },
+        { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
+      );
+    }
+
+    function retryLocation() {
+      checkLocation();
+    }
+
+    let videoStream;
+    function startScanner() {
+      const video = document.getElementById('video');
+      navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } })
+        .then(stream => {
+          videoStream = stream;
+          video.srcObject = stream;
+        })
+        .catch(err => {
+          console.error("Camera access failed:", err);
+          goToResult(false, "Camera access failed.");
+        });
+    }
+
+    function stopScanner() {
+      if (videoStream) {
+        videoStream.getTracks().forEach(track => track.stop());
+      }
+    }
+
+    function simulateScan() {
+      stopScanner();
+      goToResult(true, "QR Code accepted. Attendance marked.");
+    }
+
+    showScreen('welcomeScreen');
+  </script>
+</body>
+</html>
